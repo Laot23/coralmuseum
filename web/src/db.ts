@@ -46,7 +46,7 @@ let allItems: MuseumItem[] = [];
 
 export async function loadDatabase(): Promise<void> {
   if (itemsMap) return;
-  const resp = await fetch("/data/museum-items.json");
+  const resp = await fetch(`${import.meta.env.BASE_URL}data/museum-items.json`);
   if (!resp.ok) throw new Error(`Failed to load item database: ${resp.status}`);
   const data: MuseumItem[] = await resp.json();
   allItems = data;
