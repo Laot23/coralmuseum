@@ -1,0 +1,23 @@
+{
+  "name": "coral-museum-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "build-db": "python ../scripts/build-db.py"
+  },
+  "devDependencies": {
+    "@types/pako": "^2.0.4",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.2"
+  },
+  "dependencies": {
+    "pako": "^2.1.0"
+  }
+}

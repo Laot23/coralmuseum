@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coral Museum Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-full font-body">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-bark-dark/80 border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+      <span class="text-2xl">🪸</span>
+      <h1 class="text-xl font-display font-extrabold tracking-tight text-merino-50">
+        Coral Museum Tracker
+      </h1>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- Upload Section -->
+    <section id="upload-section" class="flex flex-col items-center gap-6 py-12">
+      <div class="text-center max-w-lg">
+        <h2 class="text-4xl font-display font-extrabold text-merino-50 mb-3">Track your museum</h2>
+        <p class="text-merino-300/80 text-lg">Upload your Coral Island save file to see which donations you're still missing.</p>
+      </div>
+
+      <div id="drop-zone"
+           class="w-full max-w-xl border-2 border-dashed border-coral-400/40 bg-merino-100/10
+                  p-14 text-center cursor-pointer transition-all hover:border-coral-400 hover:bg-merino-100/15
+                  group"
+           style="border-radius: 30px">
+        <div class="flex flex-col items-center gap-4">
+          <svg class="w-16 h-16 text-coral-400/60 group-hover:text-coral-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <p class="text-merino-100 font-semibold text-lg">
+            Drop your <code class="text-coral-300 bg-bark-dark/60 px-2 py-0.5 rounded-md text-sm">.sav</code> file here
+          </p>
+          <p class="text-merino-400 text-sm">or click to browse</p>
+          <input type="file" id="file-input" accept=".sav" class="hidden" />
+        </div>
+      </div>
+
+      <p class="text-merino-500/60 text-xs max-w-md text-center">
+        Your save file is processed entirely in your browser. Nothing is uploaded to any server.
+      </p>
+    </section>
+
+    <!-- Loading -->
+    <section id="loading-section" class="hidden flex flex-col items-center gap-4 py-20">
+      <div class="w-12 h-12 border-4 border-coral-400/30 border-t-coral-400 rounded-full animate-spin"></div>
+      <p class="text-merino-300 text-lg">Parsing save file...</p>
+    </section>
+
+    <!-- Error -->
+    <section id="error-section" class="hidden flex flex-col items-center gap-4 py-12">
+      <div class="summary-card max-w-lg text-center">
+        <p class="text-coral-700 font-bold text-lg mb-2">Something went wrong</p>
+        <p id="error-message" class="text-bark-light text-sm"></p>
+        <button id="error-retry" class="mt-4 px-6 py-2.5 bg-coral-400 hover:bg-coral-500 text-white rounded-xl font-bold transition-colors">
+          Try again
+        </button>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="results-section" class="hidden">
+
+      <!-- Summary -->
+      <div id="summary-bar" class="summary-card mb-8">
+        <div class="flex flex-col sm:flex-row items-center gap-6">
+          <div class="relative w-28 h-28 flex-shrink-0">
+            <svg class="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#ede3d0" stroke-width="10" />
+              <circle id="progress-ring" cx="60" cy="60" r="52" fill="none" stroke="#d89e43"
+                      stroke-width="10" stroke-linecap="round"
+                      stroke-dasharray="326.73" stroke-dashoffset="326.73" class="transition-all duration-1000" />
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span id="progress-pct" class="text-2xl font-extrabold text-gold-600">0%</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-2xl font-display font-extrabold text-bark" id="summary-title">Museum Progress</p>
+            <p class="text-bark-light text-lg" id="summary-detail"></p>
+          </div>
+          <div class="sm:ml-auto">
+            <button id="upload-another" class="px-5 py-2.5 bg-merino-200 hover:bg-merino-300 text-bark rounded-xl font-bold text-sm transition-colors">
+              Upload another
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div id="filter-bar" class="mb-6 flex flex-wrap items-center gap-3">
+        <div class="flex bg-merino-100/10 backdrop-blur rounded-xl p-1 border border-white/10">
+          <button data-filter="all"     class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">All</button>
+          <button data-filter="missing" class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors bg-coral-400/20 text-coral-300">Missing</button>
+          <button data-filter="donated" class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">Donated</button>
+        </div>
+        <div class="flex-1 min-w-[200px] max-w-sm">
+          <input id="search-input" type="text" placeholder="Search items..."
+                 class="w-full px-4 py-2.5 rounded-xl bg-merino-100/10 backdrop-blur border border-white/10
+                        text-merino-100 placeholder-merino-500 text-sm focus:outline-none focus:border-coral-400/50" />
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div id="categories-container" class="flex flex-col gap-6"></div>
+
+    </section>
+  </main>
+
+  <footer class="text-center py-8 text-merino-500/50 text-xs">
+    Item data &amp; icons from <a href="https://coral.guide" class="text-coral-400/60 hover:text-coral-400 underline" target="_blank" rel="noopener">coral.guide</a>
+    · Save parsing runs entirely in your browser
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

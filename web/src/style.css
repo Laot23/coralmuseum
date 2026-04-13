@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background:
+      linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+      radial-gradient(ellipse at 30% 20%, rgba(135, 44, 32, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 80%, rgba(216, 158, 67, 0.15) 0%, transparent 50%),
+      #1a0e06;
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background-color: rgba(237, 123, 103, 0.3);
+  }
+}
+
+@layer components {
+
+  /* ── Category cards: cream surface like coral.guide ── */
+  .category-card {
+    @apply bg-merino-100 border border-merino-200 overflow-hidden;
+    border-radius: 30px;
+    box-shadow: 0 2px 12px rgba(52, 32, 22, 0.12);
+  }
+
+  .category-header {
+    @apply flex items-center justify-between px-6 py-5 cursor-pointer
+           hover:bg-merino-200/50 transition-colors select-none;
+  }
+
+  /* ── Item grid ── */
+  .item-grid {
+    @apply grid gap-3 p-4;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  .item-card {
+    @apply rounded-2xl border overflow-hidden transition-all;
+  }
+
+  .item-card.item-missing {
+    @apply bg-white border-coral-200/60;
+    box-shadow: 0 1px 4px rgba(237, 123, 103, 0.08);
+  }
+
+  .item-card.item-donated {
+    @apply bg-merino-50 border-merino-200;
+  }
+
+  .item-card-main {
+    @apply flex items-center gap-3 p-3 cursor-pointer hover:bg-merino-100/50 transition-colors;
+  }
+
+  /* ── Item icon ── */
+  .item-icon-wrap {
+    @apply relative flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center;
+    background: linear-gradient(135deg, #faf7f2 0%, #ede3d0 100%);
+  }
+
+  .item-icon {
+    @apply w-11 h-11 object-contain;
+    image-rendering: pixelated;
+  }
+
+  .item-icon-fallback {
+    @apply w-11 h-11 flex items-center justify-center text-merino-400 text-lg font-bold;
+  }
+
+  .item-check {
+    @apply absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500
+           text-white text-xs font-bold flex items-center justify-center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  /* ── Item info ── */
+  .item-info {
+    @apply flex-1 min-w-0;
+  }
+
+  .item-name {
+    @apply block font-bold text-bark text-sm truncate leading-tight;
+  }
+
+  .item-meta {
+    @apply flex items-center gap-1.5 mt-1 flex-wrap;
+  }
+
+  .item-price {
+    @apply text-xs text-gold-600 font-semibold mt-0.5;
+  }
+
+  .item-expand-icon {
+    @apply w-4 h-4 text-bark-light/50 flex-shrink-0 transition-transform;
+  }
+
+  /* ── Badges ── */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold leading-none;
+  }
+
+  .badge-donated {
+    @apply bg-emerald-100 text-emerald-700;
+  }
+
+  .badge-missing {
+    @apply bg-coral-100 text-coral-700;
+  }
+
+  .badge-type {
+    @apply bg-merino-200 text-bark-light;
+  }
+
+  /* ── Chips (detail panels) ── */
+  .chip {
+    @apply inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold;
+  }
+
+  .chip-label {
+    @apply opacity-60 mr-1;
+  }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    @apply px-4 py-3 border-t border-merino-200 bg-merino-50;
+  }
+
+  .detail-desc {
+    @apply text-bark-light text-sm italic mb-2 leading-relaxed;
+  }
+
+  .detail-chips {
+    @apply flex flex-wrap gap-1.5 mb-2;
+  }
+
+  /* ── Drop source rows ── */
+  .source-section {
+    @apply mt-2;
+  }
+
+  .source-heading {
+    @apply text-xs font-bold text-bark uppercase tracking-wider mb-2 opacity-60;
+  }
+
+  .source-row {
+    @apply flex items-center gap-2.5 py-1.5;
+  }
+
+  .source-row + .source-row {
+    @apply border-t border-merino-200;
+  }
+
+  .source-icon-wrap {
+    @apply flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center;
+    background: linear-gradient(135deg, #faf7f2 0%, #ede3d0 100%);
+  }
+
+  .source-icon {
+    @apply w-6 h-6 object-contain;
+    image-rendering: pixelated;
+  }
+
+  .source-info {
+    @apply flex-1 min-w-0;
+  }
+
+  .source-name {
+    @apply block text-sm font-semibold text-bark truncate;
+  }
+
+  .source-shop {
+    @apply text-[11px] text-bark-light/60;
+  }
+
+  .source-pct {
+    @apply text-xs font-bold text-bark tabular-nums text-right flex-shrink-0;
+  }
+
+  /* ── Summary card (dark context) ── */
+  .summary-card {
+    @apply bg-merino-100 border border-merino-200 p-6;
+    border-radius: 30px;
+    box-shadow: 0 2px 12px rgba(52, 32, 22, 0.12);
+  }
+}
