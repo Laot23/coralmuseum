@@ -261,17 +261,17 @@ function renderDetailPanel(item: MuseumItem): string {
       chip("Pattern", f.pattern),
       chip("Difficulty", f.difficulty, difficultyColor(f.difficulty)),
     ].join("")}</div>`);
-    for (const s of f.spawn) parts.push(renderSpawn(s));
+    parts.push(renderSpawnList(f.spawn));
   }
 
   if (item.bug) {
     parts.push(`<div class="detail-chips">${chip("Rarity", item.bug.rarity, rarityColor(item.bug.rarity))}</div>`);
-    for (const s of item.bug.spawn) parts.push(renderSpawn(s));
+    parts.push(renderSpawnList(item.bug.spawn));
   }
 
   if (item.ocean) {
     parts.push(`<div class="detail-chips">${chip("Rarity", item.ocean.rarity, rarityColor(item.ocean.rarity))}</div>`);
-    for (const s of item.ocean.spawn) parts.push(renderSpawn(s));
+    parts.push(renderSpawnList(item.ocean.spawn));
   }
 
   if (item.sources && item.sources.length > 0) {
@@ -308,6 +308,41 @@ function chip(label: string, value: string, colorClass?: string): string {
   return `<span class="chip ${cls}"><span class="chip-label">${esc(label)}:</span> ${esc(value)}</span>`;
 }
 
+function spawnKey(s: SpawnData): string {
+  return [
+    s.season.slice().sort().join(","),
+    s.time.slice().sort().join(","),
+    s.weather.slice().sort().join(","),
+  ].join("|");
+}
+
+function mergeSpawns(spawns: SpawnData[]): SpawnData[] {
+  const map = new Map<string, SpawnData>();
+  for (const s of spawns) {
+    const k = spawnKey(s);
+    const existing = map.get(k);
+    if (existing) {
+      const locs = new Set([...existing.location, ...s.location]);
+      existing.location = [...locs];
+    } else {
+      map.set(k, { location: [...s.location], season: [...s.season], time: [...s.time], weather: [...s.weather] });
+    }
+  }
+  return [...map.values()];
+}
+
+function renderSpawnList(spawns: SpawnData[]): string {
+  if (spawns.length === 0) return "";
+  const merged = mergeSpawns(spawns);
+  if (merged.length === 1) return renderSpawn(merged[0]);
+  return `<div class="spawn-options">${merged.map((s, i) =>
+    `<div class="spawn-option">
+      <div class="spawn-option-label">Option ${i + 1}</div>
+      ${renderSpawnInner(s)}
+    </div>`
+  ).join("")}</div>`;
+}
+
 function renderSpawn(s: SpawnData): string {
   const rows: string[] = [];
   if (s.location.length) rows.push(chipRow("Location", s.location));
@@ -316,6 +351,16 @@ function renderSpawn(s: SpawnData): string {
   if (s.weather.length) rows.push(chipRow("Weather", s.weather.map(capitalize)));
   if (rows.length === 0) return "";
   return `<div class="detail-chips">${rows.join("")}</div>`;
+}
+
+function renderSpawnInner(s: SpawnData): string {
+  const rows: string[] = [];
+  if (s.location.length) rows.push(chipRow("Location", s.location));
+  if (s.season.length) rows.push(chipRow("Season", s.season.map(capitalize)));
+  if (s.time.length) rows.push(chipRow("Time", s.time.map(capitalize)));
+  if (s.weather.length) rows.push(chipRow("Weather", s.weather.map(capitalize)));
+  if (rows.length === 0) return "";
+  return `<div class="detail-chips mb-0">${rows.join("")}</div>`;
 }
 
 function chipRow(label: string, values: string[]): string {

@@ -135,6 +135,20 @@
     @apply flex flex-wrap gap-1.5 mb-2;
   }
 
+  /* ── Spawn options (multiple catch locations) ── */
+  .spawn-options {
+    @apply grid gap-2 mb-2;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .spawn-option {
+    @apply rounded-xl bg-merino-100 border border-merino-200 p-2.5;
+  }
+
+  .spawn-option-label {
+    @apply text-[11px] font-bold uppercase tracking-wider text-bark-light/50 mb-1.5;
+  }
+
   /* ── Drop source rows ── */
   .source-section {
     @apply mt-2;
