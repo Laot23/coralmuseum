@@ -87,6 +87,76 @@ export interface CategoryData {
   itemIds: string[];
 }
 
+export interface ShippingMap {
+  [itemId: string]: number;
+}
+
+/**
+ * Parse itemTrackDataArray from decompressed UE4 save bytes.
+ * Each tracked item has an ItemId (NameProperty) and a totalShipped (IntProperty).
+ */
+export function parseShippingData(data: Uint8Array): ShippingMap {
+  const results: ShippingMap = {};
+  const enc = new TextEncoder();
+  const pattern = enc.encode("ItemId\x00\r\x00\x00\x00NameProperty\x00");
+  const tsPattern = enc.encode("totalShipped\x00\x0c\x00\x00\x00IntProperty\x00");
+
+  for (let i = 0; i < data.length - pattern.length; i++) {
+    if (!matchBytes(data, i, pattern)) continue;
+
+    const strLenPos = i + pattern.length + 4 + 5;
+    if (strLenPos + 4 > data.length) break;
+
+    const strLen = readInt32(data, strLenPos);
+    if (strLen < 1 || strLen > 60) continue;
+
+    const itemStart = strLenPos + 4;
+    if (itemStart + strLen > data.length) continue;
+
+    let itemId: string;
+    try {
+      itemId = new TextDecoder("ascii").decode(data.subarray(itemStart, itemStart + strLen - 1));
+    } catch {
+      continue;
+    }
+    if (!itemId.startsWith("item_")) continue;
+
+    const searchEnd = Math.min(itemStart + 300, data.length - tsPattern.length);
+    let tsPos = -1;
+    for (let j = itemStart; j < searchEnd; j++) {
+      if (matchBytes(data, j, tsPattern)) {
+        tsPos = j;
+        break;
+      }
+    }
+    if (tsPos === -1) continue;
+
+    const valPos = tsPos + tsPattern.length + 4 + 4 + 1;
+    if (valPos + 4 <= data.length) {
+      results[itemId] = readInt32(data, valPos);
+    }
+  }
+
+  return results;
+}
+
+function matchBytes(data: Uint8Array, offset: number, needle: Uint8Array): boolean {
+  if (offset + needle.length > data.length) return false;
+  for (let j = 0; j < needle.length; j++) {
+    if (data[offset + j] !== needle[j]) return false;
+  }
+  return true;
+}
+
+function readInt32(data: Uint8Array, offset: number): number {
+  return (
+    data[offset] |
+    (data[offset + 1] << 8) |
+    (data[offset + 2] << 16) |
+    (data[offset + 3] << 24)
+  );
+}
+
 export function parseCategories(data: Uint8Array): CategoryData[] {
   const pos = findAnchor(data);
   if (pos === -1) return [];

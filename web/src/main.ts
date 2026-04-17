@@ -1,7 +1,18 @@
 import "./style.css";
 import { loadDatabase } from "./db";
-import { decompressSave, parseCategories, parseDonationMap } from "./parser";
-import { renderResults, setFilter, setSearch, showError, showSection } from "./ui";
+import { decompressSave, parseCategories, parseDonationMap, parseShippingData } from "./parser";
+import {
+  renderResults,
+  renderShippingResults,
+  setFilter,
+  setSearch,
+  setShippingFilter,
+  setShippingSearch,
+  showError,
+  showSection,
+  switchTab,
+  type TabId,
+} from "./ui";
 
 // ── Elements ──
 
@@ -10,6 +21,7 @@ const fileInput = document.getElementById("file-input") as HTMLInputElement;
 const errorRetry = document.getElementById("error-retry")!;
 const uploadAnother = document.getElementById("upload-another")!;
 const searchInput = document.getElementById("search-input") as HTMLInputElement;
+const shippingSearchInput = document.getElementById("shipping-search-input") as HTMLInputElement;
 
 // ── Upload handling ──
 
@@ -24,15 +36,23 @@ function handleFile(file: File): void {
       const data = decompressSave(buffer);
       const donations = parseDonationMap(data);
       const categories = parseCategories(data);
+      const shipping = parseShippingData(data);
 
-      if (categories.length === 0) {
+      const hasMuseum = categories.length > 0;
+      const hasShipping = Object.keys(shipping).length > 0;
+
+      if (!hasMuseum && !hasShipping) {
         showError(
-          "No museum categories found. Make sure you have visited the museum at least once in-game."
+          "No museum or shipping data found. Make sure you have visited the museum or shipped items at least once in-game."
         );
         return;
       }
 
-      renderResults(categories, donations);
+      if (hasMuseum) renderResults(categories, donations);
+      if (hasShipping) renderShippingResults(shipping);
+
+      showSection("results-section");
+      switchTab(hasMuseum ? "museum" : "shipping");
     } catch (e) {
       showError(e instanceof Error ? e.message : String(e));
     }
@@ -69,18 +89,37 @@ dropZone.addEventListener("drop", (e) => {
 function resetToUpload(): void {
   fileInput.value = "";
   searchInput.value = "";
+  shippingSearchInput.value = "";
   showSection("upload-section");
 }
 
 errorRetry.addEventListener("click", resetToUpload);
 uploadAnother.addEventListener("click", resetToUpload);
 
-// ── Filters ──
+// ── Top-level tabs ──
+
+for (const btn of document.querySelectorAll(".tab-btn")) {
+  btn.addEventListener("click", () => {
+    const tab = (btn as HTMLElement).dataset.tab as TabId;
+    switchTab(tab);
+  });
+}
+
+// ── Museum Filters ──
 
 for (const btn of document.querySelectorAll(".filter-btn")) {
   btn.addEventListener("click", () => {
     const mode = (btn as HTMLElement).dataset.filter as "all" | "missing" | "donated";
     setFilter(mode);
+  });
+}
+
+// ── Shipping Filters ──
+
+for (const btn of document.querySelectorAll(".ship-filter-btn")) {
+  btn.addEventListener("click", () => {
+    const mode = (btn as HTMLElement).dataset.shipFilter as "all" | "shipped" | "not-shipped";
+    setShippingFilter(mode);
   });
 }
 
@@ -90,4 +129,10 @@ let searchTimeout: ReturnType<typeof setTimeout>;
 searchInput.addEventListener("input", () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => setSearch(searchInput.value), 150);
+});
+
+let shippingSearchTimeout: ReturnType<typeof setTimeout>;
+shippingSearchInput.addEventListener("input", () => {
+  clearTimeout(shippingSearchTimeout);
+  shippingSearchTimeout = setTimeout(() => setShippingSearch(shippingSearchInput.value), 150);
 });

@@ -92,48 +92,106 @@
     <!-- Results -->
     <section id="results-section" class="hidden">
 
-      <!-- Summary -->
-      <div id="summary-bar" class="summary-card mb-8">
-        <div class="flex flex-col sm:flex-row items-center gap-6">
-          <div class="relative w-28 h-28 flex-shrink-0">
-            <svg class="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="#ede3d0" stroke-width="10" />
-              <circle id="progress-ring" cx="60" cy="60" r="52" fill="none" stroke="#d89e43"
-                      stroke-width="10" stroke-linecap="round"
-                      stroke-dasharray="326.73" stroke-dashoffset="326.73" class="transition-all duration-1000" />
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span id="progress-pct" class="text-2xl font-extrabold text-gold-600">0%</span>
+      <!-- Top-level tabs: Museum / Shipping -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex bg-merino-100/10 backdrop-blur rounded-xl p-1 border border-white/10">
+          <button id="tab-museum" data-tab="museum"
+                  class="tab-btn px-5 py-2 rounded-lg text-sm font-bold transition-colors bg-coral-400/20 text-coral-300">
+            🪸 Museum
+          </button>
+          <button id="tab-shipping" data-tab="shipping"
+                  class="tab-btn px-5 py-2 rounded-lg text-sm font-bold transition-colors text-merino-300 hover:text-merino-100">
+            📦 Shipping
+          </button>
+        </div>
+        <button id="upload-another" class="px-5 py-2.5 bg-merino-200 hover:bg-merino-300 text-bark rounded-xl font-bold text-sm transition-colors">
+          Upload another
+        </button>
+      </div>
+
+      <!-- ════════ Museum Tab ════════ -->
+      <div id="museum-tab" class="tab-content">
+
+        <!-- Summary -->
+        <div id="summary-bar" class="summary-card mb-8">
+          <div class="flex flex-col sm:flex-row items-center gap-6">
+            <div class="relative w-28 h-28 flex-shrink-0">
+              <svg class="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#ede3d0" stroke-width="10" />
+                <circle id="progress-ring" cx="60" cy="60" r="52" fill="none" stroke="#d89e43"
+                        stroke-width="10" stroke-linecap="round"
+                        stroke-dasharray="326.73" stroke-dashoffset="326.73" class="transition-all duration-1000" />
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span id="progress-pct" class="text-2xl font-extrabold text-gold-600">0%</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-2xl font-display font-extrabold text-bark" id="summary-title">Museum Progress</p>
+              <p class="text-bark-light text-lg" id="summary-detail"></p>
             </div>
           </div>
-          <div>
-            <p class="text-2xl font-display font-extrabold text-bark" id="summary-title">Museum Progress</p>
-            <p class="text-bark-light text-lg" id="summary-detail"></p>
+        </div>
+
+        <!-- Museum Filters -->
+        <div id="filter-bar" class="mb-6 flex flex-wrap items-center gap-3">
+          <div class="flex bg-merino-100/10 backdrop-blur rounded-xl p-1 border border-white/10">
+            <button data-filter="all"     class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">All</button>
+            <button data-filter="missing" class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors bg-coral-400/20 text-coral-300">Missing</button>
+            <button data-filter="donated" class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">Donated</button>
           </div>
-          <div class="sm:ml-auto">
-            <button id="upload-another" class="px-5 py-2.5 bg-merino-200 hover:bg-merino-300 text-bark rounded-xl font-bold text-sm transition-colors">
-              Upload another
-            </button>
+          <div class="flex-1 min-w-[200px] max-w-sm">
+            <input id="search-input" type="text" placeholder="Search items..."
+                   class="w-full px-4 py-2.5 rounded-xl bg-merino-100/10 backdrop-blur border border-white/10
+                          text-merino-100 placeholder-merino-500 text-sm focus:outline-none focus:border-coral-400/50" />
           </div>
         </div>
+
+        <!-- Categories -->
+        <div id="categories-container" class="flex flex-col gap-6"></div>
       </div>
 
-      <!-- Filters -->
-      <div id="filter-bar" class="mb-6 flex flex-wrap items-center gap-3">
-        <div class="flex bg-merino-100/10 backdrop-blur rounded-xl p-1 border border-white/10">
-          <button data-filter="all"     class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">All</button>
-          <button data-filter="missing" class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors bg-coral-400/20 text-coral-300">Missing</button>
-          <button data-filter="donated" class="filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">Donated</button>
-        </div>
-        <div class="flex-1 min-w-[200px] max-w-sm">
-          <input id="search-input" type="text" placeholder="Search items..."
-                 class="w-full px-4 py-2.5 rounded-xl bg-merino-100/10 backdrop-blur border border-white/10
-                        text-merino-100 placeholder-merino-500 text-sm focus:outline-none focus:border-coral-400/50" />
-        </div>
-      </div>
+      <!-- ════════ Shipping Tab ════════ -->
+      <div id="shipping-tab" class="tab-content hidden">
 
-      <!-- Categories -->
-      <div id="categories-container" class="flex flex-col gap-6"></div>
+        <!-- Shipping Summary -->
+        <div id="shipping-summary-bar" class="summary-card mb-8">
+          <div class="flex flex-col sm:flex-row items-center gap-6">
+            <div class="relative w-28 h-28 flex-shrink-0">
+              <svg class="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#ede3d0" stroke-width="10" />
+                <circle id="shipping-progress-ring" cx="60" cy="60" r="52" fill="none" stroke="#d89e43"
+                        stroke-width="10" stroke-linecap="round"
+                        stroke-dasharray="326.73" stroke-dashoffset="326.73" class="transition-all duration-1000" />
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span id="shipping-progress-pct" class="text-2xl font-extrabold text-gold-600">0%</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-2xl font-display font-extrabold text-bark" id="shipping-summary-title">Shipping Progress</p>
+              <p class="text-bark-light text-lg" id="shipping-summary-detail"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipping Filters -->
+        <div class="mb-6 flex flex-wrap items-center gap-3">
+          <div class="flex bg-merino-100/10 backdrop-blur rounded-xl p-1 border border-white/10">
+            <button data-ship-filter="all"        class="ship-filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">All</button>
+            <button data-ship-filter="not-shipped" class="ship-filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors bg-coral-400/20 text-coral-300">Not Shipped</button>
+            <button data-ship-filter="shipped"     class="ship-filter-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100">Shipped</button>
+          </div>
+          <div class="flex-1 min-w-[200px] max-w-sm">
+            <input id="shipping-search-input" type="text" placeholder="Search items..."
+                   class="w-full px-4 py-2.5 rounded-xl bg-merino-100/10 backdrop-blur border border-white/10
+                          text-merino-100 placeholder-merino-500 text-sm focus:outline-none focus:border-coral-400/50" />
+          </div>
+        </div>
+
+        <!-- Shipping items grid -->
+        <div id="shipping-container" class="flex flex-col gap-6"></div>
+      </div>
 
     </section>
   </main>

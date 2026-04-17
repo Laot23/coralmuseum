@@ -1,6 +1,7 @@
-import type { MuseumItem, SpawnData, DropSource } from "./db";
-import type { CategoryData, DonationMap } from "./parser";
-import { getItem } from "./db";
+import type { MuseumItem, SpawnData, DropSource, ShippingItem } from "./db";
+import type { CategoryData, DonationMap, ShippingMap } from "./parser";
+import { getItem, getShippingItem, getAllShippingItems } from "./db";
+import { getShippingItemName, getShippingBaseId } from "./shipping-names";
 
 const ICON_BASE = "https://coral.guide/assets/live/items/icons/";
 
@@ -13,6 +14,13 @@ let donationMap: DonationMap = {};
 let categories: CategoryData[] = [];
 const expandedCategories = new Set<string>();
 const expandedItems = new Set<string>();
+
+type ShipFilterMode = "all" | "shipped" | "not-shipped";
+let shippingFilter: ShipFilterMode = "not-shipped";
+let shippingSearch = "";
+let shippingData: ShippingMap = {};
+
+export type TabId = "museum" | "shipping";
 
 // ── Helpers ──
 
@@ -77,7 +85,6 @@ export function renderResults(cats: CategoryData[], donations: DonationMap): voi
   for (const cat of cats) expandedCategories.add(cat.name);
 
   renderCategories();
-  showSection("results-section");
 }
 
 export function setFilter(mode: FilterMode): void {
@@ -393,6 +400,276 @@ function renderDropSources(sources: DropSource[]): string {
     <div class="source-section">
       <div class="source-heading">Obtained from</div>
       ${rows.join("")}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Tab switching ──
+// ══════════════════════════════════════════════════════════════════════════════
+
+export function switchTab(tab: TabId): void {
+  const museumTab = document.getElementById("museum-tab");
+  const shippingTab = document.getElementById("shipping-tab");
+  if (!museumTab || !shippingTab) return;
+
+  if (tab === "museum") {
+    museumTab.classList.remove("hidden");
+    shippingTab.classList.add("hidden");
+  } else {
+    museumTab.classList.add("hidden");
+    shippingTab.classList.remove("hidden");
+  }
+
+  for (const btn of document.querySelectorAll(".tab-btn")) {
+    const b = btn as HTMLElement;
+    if (b.dataset.tab === tab) {
+      b.className = "tab-btn px-5 py-2 rounded-lg text-sm font-bold transition-colors bg-coral-400/20 text-coral-300";
+    } else {
+      b.className = "tab-btn px-5 py-2 rounded-lg text-sm font-bold transition-colors text-merino-300 hover:text-merino-100";
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Shipping UI ──
+// ══════════════════════════════════════════════════════════════════════════════
+
+export function renderShippingResults(data: ShippingMap): void {
+  shippingData = data;
+  mergedShipping = buildMergedShipping(data);
+
+  const total = mergedShipping.length;
+  const shippedCount = mergedShipping.filter((e) => e.count > 0).length;
+  const pct = total > 0 ? Math.round((shippedCount / total) * 100) : 0;
+
+  const ring = document.getElementById("shipping-progress-ring") as SVGCircleElement | null;
+  if (ring) {
+    const circumference = 2 * Math.PI * 52;
+    ring.style.strokeDasharray = `${circumference}`;
+    ring.style.strokeDashoffset = `${circumference - (pct / 100) * circumference}`;
+  }
+
+  const pctEl = document.getElementById("shipping-progress-pct");
+  if (pctEl) pctEl.textContent = `${pct}%`;
+
+  const detail = document.getElementById("shipping-summary-detail");
+  if (detail) detail.textContent = `${shippedCount} of ${total} item types shipped`;
+
+  renderShippingItems();
+}
+
+interface MergedShipEntry {
+  id: string;
+  name: string;
+  category: string;
+  iconName: string;
+  count: number;
+}
+
+let mergedShipping: MergedShipEntry[] = [];
+
+function buildMergedShipping(saveData: ShippingMap): MergedShipEntry[] {
+  const seen = new Set<string>();
+  const entries: MergedShipEntry[] = [];
+
+  const allShip = getAllShippingItems();
+  for (const item of allShip) {
+    const id = item.id;
+    seen.add(id);
+    entries.push({
+      id,
+      name: getShippingItemName(id),
+      category: item.category,
+      iconName: item.iconName,
+      count: saveData[id] ?? 0,
+    });
+  }
+
+  for (const [id, count] of Object.entries(saveData)) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const baseId = getShippingBaseId(id);
+    const shipItem = getShippingItem(id) ?? getShippingItem(baseId);
+    const dbItem = getItem(id) ?? getItem(baseId);
+    entries.push({
+      id,
+      name: getShippingItemName(id),
+      category: shipItem?.category ?? dbItem?.category ?? "",
+      iconName: shipItem?.iconName ?? dbItem?.iconName ?? "",
+      count,
+    });
+  }
+
+  return entries;
+}
+
+export function setShippingFilter(mode: ShipFilterMode): void {
+  shippingFilter = mode;
+  for (const btn of document.querySelectorAll(".ship-filter-btn")) {
+    const b = btn as HTMLElement;
+    const m = b.dataset.shipFilter;
+    if (m === mode) {
+      b.className = "ship-filter-btn px-4 py-1.5 rounded-md text-sm font-semibold transition-colors " +
+        (m === "not-shipped"
+          ? "bg-coral-400/20 text-coral-300"
+          : m === "shipped"
+            ? "bg-emerald-900/30 text-emerald-400"
+            : "bg-merino-800/40 text-merino-100");
+    } else {
+      b.className = "ship-filter-btn px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-merino-300 hover:text-merino-100";
+    }
+  }
+  renderShippingItems();
+}
+
+export function setShippingSearch(query: string): void {
+  shippingSearch = query.toLowerCase().trim();
+  renderShippingItems();
+}
+
+function matchesShippingSearch(e: MergedShipEntry): boolean {
+  if (!shippingSearch) return true;
+  return e.name.toLowerCase().includes(shippingSearch) || e.id.includes(shippingSearch);
+}
+
+function matchesShippingFilter(e: MergedShipEntry): boolean {
+  if (shippingFilter === "shipped" && e.count <= 0) return false;
+  if (shippingFilter === "not-shipped" && e.count > 0) return false;
+  return true;
+}
+
+function renderShippingItems(): void {
+  const container = document.getElementById("shipping-container");
+  if (!container) return;
+  container.innerHTML = "";
+
+  // Group ALL items by category (search-filtered but NOT ship-status-filtered)
+  // so that shipped/total counts are always accurate.
+  const allByCategory = new Map<string, MergedShipEntry[]>();
+  for (const e of mergedShipping) {
+    if (!matchesShippingSearch(e)) continue;
+    const cat = e.category || "Other";
+    let arr = allByCategory.get(cat);
+    if (!arr) { arr = []; allByCategory.set(cat, arr); }
+    arr.push(e);
+  }
+
+  const sortedCats = [...allByCategory.entries()].sort((a, b) => {
+    const aShipped = a[1].filter((e) => e.count > 0).length;
+    const bShipped = b[1].filter((e) => e.count > 0).length;
+    const aTotal = a[1].length;
+    const bTotal = b[1].length;
+    const aPct = aTotal > 0 ? aShipped / aTotal : 0;
+    const bPct = bTotal > 0 ? bShipped / bTotal : 0;
+    if (aPct !== bPct) return bPct - aPct;
+    return a[0].localeCompare(b[0]);
+  });
+
+  let anyVisible = false;
+  for (const [cat, allItems] of sortedCats) {
+    const shippedInCat = allItems.filter((e) => e.count > 0).length;
+    const totalInCat = allItems.length;
+
+    const visibleItems = allItems.filter(matchesShippingFilter);
+    if (visibleItems.length === 0) continue;
+    anyVisible = true;
+
+    visibleItems.sort((a, b) => {
+      if (a.count > 0 && b.count <= 0) return -1;
+      if (a.count <= 0 && b.count > 0) return 1;
+      if (a.count > 0 && b.count > 0) return b.count - a.count;
+      return a.name.localeCompare(b.name);
+    });
+
+    container.appendChild(buildShippingCategory(
+      formatCategoryName(cat), visibleItems, shippedInCat, totalInCat,
+    ));
+  }
+
+  if (!anyVisible) {
+    container.innerHTML = `
+      <div class="summary-card text-center py-10">
+        <p class="text-bark-light text-sm">No items match current filters</p>
+      </div>`;
+  }
+}
+
+const expandedShippingCats = new Set<string>();
+
+function buildShippingCategory(
+  title: string,
+  items: MergedShipEntry[],
+  shipped: number,
+  total: number,
+): HTMLElement {
+  const card = document.createElement("div");
+  card.className = "category-card";
+  const complete = shipped === total && total > 0;
+  const expanded = expandedShippingCats.has(title);
+
+  card.innerHTML = `
+    <div class="category-header" data-ship-cat="${esc(title)}">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-bark transition-transform duration-200 ${expanded ? "rotate-90" : ""}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="font-display font-bold text-bark text-lg">${esc(title)}</span>
+        ${complete ? `<span class="text-emerald-600 text-sm font-semibold">✓ Complete</span>` : ""}
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-semibold text-bark-light">${shipped} / ${total}</span>
+        <div class="w-28 h-2.5 bg-merino-200 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500 ${complete ? "bg-emerald-500" : "bg-gold-400"}"
+               style="width: ${total > 0 ? (shipped / total) * 100 : 0}%"></div>
+        </div>
+      </div>
+    </div>
+    ${expanded ? `<div class="category-body">
+      <div class="item-grid">
+        ${items.map((e) => renderShippingCard(e)).join("")}
+      </div>
+    </div>` : ""}
+  `;
+
+  const header = card.querySelector(".category-header") as HTMLElement;
+  header.addEventListener("click", () => {
+    if (expandedShippingCats.has(title)) {
+      expandedShippingCats.delete(title);
+    } else {
+      expandedShippingCats.add(title);
+    }
+    renderShippingItems();
+  });
+
+  return card;
+}
+
+function renderShippingCard(entry: MergedShipEntry): string {
+  const isShipped = entry.count > 0;
+  const icon = entry.iconName ? iconUrl(entry.iconName) : "";
+
+  return `
+    <div class="item-card ${isShipped ? "item-donated" : "item-missing"}">
+      <div class="item-card-main">
+        <div class="item-icon-wrap">
+          ${icon
+            ? `<img src="${esc(icon)}" alt="${esc(entry.name)}" class="item-icon" loading="lazy"
+                   onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+               <div class="item-icon-fallback" style="display:none">?</div>`
+            : `<div class="item-icon-fallback">?</div>`}
+          ${isShipped ? `<div class="item-check">✓</div>` : ""}
+        </div>
+        <div class="item-info">
+          <span class="item-name">${esc(entry.name)}</span>
+          <div class="item-meta">
+            ${isShipped
+              ? `<span class="badge badge-donated">Shipped</span>`
+              : `<span class="badge badge-missing">Not Shipped</span>`}
+          </div>
+          ${isShipped ? `<span class="item-price">${entry.count.toLocaleString()} shipped</span>` : ""}
+        </div>
+      </div>
     </div>
   `;
 }
