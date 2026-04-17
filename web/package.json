@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "build-db": "python ../scripts/build-db.py"
+    "build-db": "python ../scripts/build-db.py && python ../scripts/build-shipping-db.py"
   },
   "devDependencies": {
     "@types/pako": "^2.0.4",
