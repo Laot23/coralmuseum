@@ -102,6 +102,7 @@ for (const btn of document.querySelectorAll(".tab-btn")) {
   btn.addEventListener("click", () => {
     const tab = (btn as HTMLElement).dataset.tab as TabId;
     switchTab(tab);
+    (window as any).goatcounter?.count({ path: `tab-${tab}`, title: `Tab: ${tab}`, event: true });
   });
 }
 
